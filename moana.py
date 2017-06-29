@@ -226,7 +226,13 @@ class AmazingMoanaGame:
                moana_image="images/babymoana.jpg",
                shells_image="images/shell.png",
                mud_image="images/mud.png"):
-    """Set up the screen.
+    """Set up the game.
+
+    Add one Moana character, a bunch of shells and a bunch of obstacles. Beware:
+    this does nothing intelligent about making sure all shells are reachable or
+    checking that the character doesn't get trapped in a corner surrounded by
+    obstacles. No pathfinding algorithms were invoked in the writing of this
+    game.
 
     Args:
       square_size: (int) the size of each grid square. The images on the grid
