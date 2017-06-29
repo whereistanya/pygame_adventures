@@ -237,6 +237,8 @@ class AmazingMoanaGame:
       mud_image: (string) filename of the image that represents an obstacle
     """
     pygame.init()
+    pygame.mixer.music.load("sounds/shells.wav")
+    pygame.mixer.music.play()
     self.clock = pygame.time.Clock()
     self.image_lib = {}
     self.done = False
