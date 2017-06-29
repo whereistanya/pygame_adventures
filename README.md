@@ -1,5 +1,8 @@
-moana.py is a small extremely stupid game for learning pygame. It makes a sound
-if you win, so don't, like, play it in a quiet meeting or whatever. I don't have
-rights to the moana picture, obviously, so I should probably replace it.
+moana.py is a small extremely stupid game for learning pygame.
+
+Warning: it makes sounds.
+
+I don't have rights to the moana picture (obviously) and I forget where I found
+the shell, so I should replace them. The mud picture is legit mine at least.
 
 Sounds by Elizabeth :-D
