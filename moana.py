@@ -114,7 +114,7 @@ class MovingThing:
 
 class Drawer:
   """The class that does the drawing!"""
-  def __init__(self, size, max_x, max_y, initial_text):
+  def __init__(self, size, max_x, max_y):
     """Set up the game screen.
 
     Args:
@@ -125,12 +125,12 @@ class Drawer:
     self.screen = pygame.display.set_mode((max_x * size, max_y * size))
     self.background = (0, 0, 0)  # rgb (black)
     font = pygame.font.SysFont("verdana", 36)
-    self.center_text = font.render(initial_text, True, (255, 255, 255))
     self.occupied = set()
     self.obstacles = set()
     self.size = size
     self.max_x = max_x         # How many squares across.
     self.max_y = max_y         # How many qsuares down.
+    self.center_text = ""
 
   def set_background(self, rgb):
     """Set the background color.
@@ -138,6 +138,15 @@ class Drawer:
       rgb: (short, short, short) tuple of 0-255 values for red, green, blue.
     """
     self.background = rgb
+
+  def set_message(self, message):
+    """Set the center text message.
+
+    Args:
+      message: (str) text to display.
+    """
+    font = pygame.font.SysFont("verdana", 36)
+    self.center_text = font.render(message, True, (255, 255, 255))
 
   def fill(self):
     """Completely fill the screen with the background color and any messages."""
@@ -198,8 +207,7 @@ class Drawer:
   def win(self):
     """Set a winning message for winners."""
     self.set_background((0, 255, 0))  # green
-    font = pygame.font.SysFont("verdana", 36)
-    self.center_text = font.render("Hurray! Press y to play again.", True, (255, 255, 255))
+    self.set_message("Hurray! Press y to play again.")
 
   def random_square(self, avoid_occupied=True):
     """Return a random square, optionally one without anything in it."""
@@ -214,7 +222,7 @@ class Drawer:
 class AmazingMoanaGame:
   """OMG IT IS SO AMAZING."""
 
-  def __init__(self, square_size=64, max_x=15, max_y=7, count=5,
+  def __init__(self, square_size=64, max_x=15, max_y=7,
                moana_image="images/babymoana.jpg",
                shells_image="images/shell.png",
                mud_image="images/mud.png"):
@@ -224,21 +232,22 @@ class AmazingMoanaGame:
       square_size: (int) the size of each grid square. The images on the grid
                    should be square and should be this size or it'll look like a mess.
       max_x, max_y: (int) how many squares on each side of the grid.
-      count: (int) how many lost things to put on the grid
       moana_image: (string) filename of the image that moves around finding things.
       shells_image: (string) filename of the image that gets found
+      mud_image: (string) filename of the image that represents an obstacle
     """
     pygame.init()
     self.clock = pygame.time.Clock()
     self.image_lib = {}
     self.done = False
-    self.drawer = Drawer(square_size, max_x, max_y, "Find all the shells!")
+    self.drawer = Drawer(square_size, max_x, max_y)
     self.moana = MovingThing(self.get_image(moana_image), self.drawer)
     self.mud = StationaryThings(self.get_image(mud_image), self.drawer, obstacle=True)
     self.mud.place_randomly(15)
     self.shells = StationaryThings(self.get_image(shells_image), self.drawer)
     self.shells.place_randomly(5)
     self.drawer.set_background((0, 0, 255))  # blue
+    self.drawer.set_message("Find all the shells!")
 
   def run(self):
     """The main game loop. Draw stuff and look for events."""
