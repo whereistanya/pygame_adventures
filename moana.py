@@ -5,28 +5,29 @@ import os
 import pygame
 import random
 
-
-class LostThings:
-  """Objects to be found on the grid."""
-
-  def __init__(self, image, count, drawer):
-    """Set up the icons that wait to be found.
+class StationaryThings:
+  """Any type of unmoving thing that appears on the grid."""
+  def __init__(self, image, drawer, obstacle=False):
+    """Set up the thing to be drawn.
 
     Args:
       image: (pygame.Surface) a loaded image.
-      count: (int) how many things to put on the screen in random places.
       drawer: (Drawer) an initialised Drawer to display images.
+      obstacle: (bool) Does this thing prevent moveable things from passing it?
     """
     self.things = set()   # Set of (x, y) tuples, indexed by grid pos, not pixels
     self.drawer = drawer
     self.image = image
-    # Choose positions for the objects.
-    while count > 0:
-      pos = self.drawer.random_square()
-      if pos in self.things:
-        continue  # Don't reuse a square
+    self.obstacle = obstacle
+
+  def add_at(self, pos):
+    """Add a thing at a square on the grid.
+
+    Args:
+      pos: ((int, int)): x, y tuple for position on grid.
+    """
+    if self.drawer.in_bounds(pos):
       self.things.add(pos)
-      count -= 1
 
   def count(self):
     """Return how many things there are."""
@@ -45,7 +46,7 @@ class LostThings:
   def draw(self):
     """Instruct the drawer to put the things on the screen."""
     for (x, y) in self.things:
-      self.drawer.draw(self.image, x, y)
+      self.drawer.draw(self.image, x, y, self.obstacle)
 
   def delete(self, pos):
     """Remove the thing at some position.
@@ -53,12 +54,23 @@ class LostThings:
     Args:
       pos: ((int, int)): tuple showing x, y position.
     """
-
     self.things.remove(pos)
 
+  def place_randomly(self, count):
+    """Place count things randomly on the grid."""
+    # Choose positions for the objects.
+    while count > 0:
+      pos = self.drawer.random_square()
+      if pos in self.things:
+        continue  # Don't reuse a square
+      self.add_at(pos)
+      count -= 1
+    self.draw()  # Initial draw to make the drawer consider these squares
+                 # occupied
 
-class ThingFinder:
-  """The icon that moves around, finding the things."""
+
+class MovingThing:
+  """An icon that moves around."""
   def __init__(self, image, drawer):
     """Set up the icon that moves to find things.
 
@@ -66,8 +78,8 @@ class ThingFinder:
       image: (pygame.Surface) a loaded image
       drawer: (Drawer) an initialised Drawer to display images
     """
-    self.image = image
     self.drawer = drawer
+    self.image = image
     self.x = 0
     self.y = 0
 
@@ -84,19 +96,19 @@ class ThingFinder:
     self.drawer.draw(self.image, self.x, self.y)
 
   def move_up(self):
-    if self.drawer.in_bounds(self.x, self.y - 1):
+    if self.drawer.in_bounds((self.x, self.y - 1)):
       self.y -= 1
 
   def move_down(self):
-    if self.drawer.in_bounds(self.x, self.y + 1):
+    if self.drawer.in_bounds((self.x, self.y + 1)):
       self.y += 1
 
   def move_left(self):
-    if self.drawer.in_bounds(self.x - 1, self.y):
+    if self.drawer.in_bounds((self.x - 1, self.y)):
       self.x -= 1
 
   def move_right(self):
-    if self.drawer.in_bounds(self.x + 1, self.y):
+    if self.drawer.in_bounds((self.x + 1, self.y)):
       self.x += 1
 
 
@@ -115,6 +127,7 @@ class Drawer:
     font = pygame.font.SysFont("verdana", 36)
     self.center_text = font.render(initial_text, True, (255, 255, 255))
     self.occupied = set()
+    self.obstacles = set()
     self.size = size
     self.max_x = max_x         # How many squares across.
     self.max_y = max_y         # How many qsuares down.
@@ -129,24 +142,31 @@ class Drawer:
   def fill(self):
     """Completely fill the screen with the background color and any messages."""
     self.occupied.clear()
+    self.obstacles.clear()
     self.screen.fill(self.background)
+
+  def show_messages(self):
     if self.center_text:
       self.screen.blit(self.center_text,
                        ((self.max_x * self.size - self.center_text.get_width()) / 2,
                         (self.max_y * self.size - self.center_text.get_height()) / 2))
 
 
-  def draw(self, image, x, y):
+  def draw(self, image, x, y, obstacle=False):
     """Put an image on the screen at some location.
 
     Args:
       image: (pygame.Surface) Already-loaded image to draw.
       x, y: (int) Grid position, in squares.
+      obstacle: (bool) whether the drawn thing stops other things from passing
+                over it.
     """
     pos_x = self.pixels(x)
     pos_y = self.pixels(y)
     self.screen.blit(image, (pos_x, pos_y))
-    self.occupied.add((pos_x, pos_y))
+    self.occupied.add((x, y))
+    if obstacle:
+      self.obstacles.add((x, y))
 
   def pixels(self, index):
      """Take a grid square and returns coords of its top left hand corner.
@@ -158,16 +178,20 @@ class Drawer:
      """
      return index * self.size
 
-  def in_bounds(self, x, y):
+  def in_bounds(self, pos):
     """Return whether the coordinates are inside the screen dimensions.
     Args:
-      x, y: (int) index of squares on grid.
+      pos: ((int, int)) x, y of squares on grid.
     Returns:
       (bool) Whether the location is inside the bounds of the grid.
     """
+    x, y = pos
     if x < 0 or y < 0:
       return False
     if x >= self.max_x or y >= self.max_y:
+      return False
+
+    if pos in self.obstacles:
       return False
     return True
 
@@ -192,7 +216,8 @@ class AmazingMoanaGame:
 
   def __init__(self, square_size=64, max_x=15, max_y=7, count=5,
                moana_image="images/babymoana.jpg",
-               shells_image="images/shell.png"):
+               shells_image="images/shell.png",
+               mud_image="images/mud.png"):
     """Set up the screen.
 
     Args:
@@ -208,15 +233,19 @@ class AmazingMoanaGame:
     self.image_lib = {}
     self.done = False
     self.drawer = Drawer(square_size, max_x, max_y, "Find all the shells!")
-    self.moana = ThingFinder(self.get_image(moana_image), self.drawer)
-    self.shells = LostThings(self.get_image(shells_image), count, self.drawer)
+    self.moana = MovingThing(self.get_image(moana_image), self.drawer)
+    self.mud = StationaryThings(self.get_image(mud_image), self.drawer, obstacle=True)
+    self.mud.place_randomly(15)
+    self.shells = StationaryThings(self.get_image(shells_image), self.drawer)
+    self.shells.place_randomly(5)
     self.drawer.set_background((0, 0, 255))  # blue
 
   def run(self):
     """The main game loop. Draw stuff and look for events."""
     while not self.done:
-      self.drawer.fill()
       self.check_events()
+      self.drawer.fill()
+      self.mud.draw()
       self.shells.draw()
       self.moana.draw()
       if self.shells.is_at(self.moana.pos()):
@@ -226,6 +255,7 @@ class AmazingMoanaGame:
           pygame.mixer.music.play()
           self.drawer.win()
 
+      self.drawer.show_messages()
       pygame.display.flip()
       self.clock.tick(60)
 
