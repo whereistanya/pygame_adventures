@@ -120,11 +120,9 @@ class Drawer:
     Args:
       size: (int) size of each square.
       max_x, max_y: (int) how many squares in each direction.
-      initial_text: (String) text to display in the center of the screen.
     """
     self.screen = pygame.display.set_mode((max_x * size, max_y * size))
     self.background = (0, 0, 0)  # rgb (black)
-    font = pygame.font.SysFont("verdana", 36)
     self.occupied = set()
     self.obstacles = set()
     self.size = size
@@ -204,11 +202,6 @@ class Drawer:
       return False
     return True
 
-  def win(self):
-    """Set a winning message for winners."""
-    self.set_background((0, 255, 0))  # green
-    self.set_message("Hurray! Press y to play again.")
-
   def random_square(self, avoid_occupied=True):
     """Return a random square, optionally one without anything in it."""
     while True:
@@ -270,11 +263,16 @@ class AmazingMoanaGame:
         if self.shells.count() == 0:
           pygame.mixer.music.load("sounds/ididit.wav")
           pygame.mixer.music.play()
-          self.drawer.win()
+          self.win()
 
       self.drawer.show_messages()
       pygame.display.flip()
       self.clock.tick(60)
+
+  def win(self):
+    """Set a winning message for winners."""
+    self.drawer.set_background((0, 255, 0))  # green
+    self.drawer.set_message("Hurray! Press y to play again.")
 
   def check_events(self):
     """Check for keypresses and take actions based on them."""
