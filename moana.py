@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 """An extremely pointless game to learn pygame with."""
 
-import os
-import pygame
 import random
 
-class StationaryThings:
+import pygame
+
+class StationaryThings(object):
   """Any type of unmoving thing that appears on the grid."""
   def __init__(self, image, drawer, obstacle=False):
     """Set up the thing to be drawn.
@@ -69,9 +69,9 @@ class StationaryThings:
                  # occupied
 
 
-class MovingThing:
+class MovingThing(object):
   """An icon that moves around."""
-  def __init__(self, image, drawer):
+  def __init__(self, image, drawer, x=0, y=0):
     """Set up the icon that moves to find things.
 
     Args:
@@ -80,8 +80,8 @@ class MovingThing:
     """
     self.drawer = drawer
     self.image = image
-    self.x = 0
-    self.y = 0
+    self.x = x
+    self.y = y
 
   def pos(self):
     """Return current location.
@@ -112,7 +112,7 @@ class MovingThing:
       self.x += 1
 
 
-class Drawer:
+class Drawer(object):
   """The class that does the drawing!"""
   def __init__(self, size, max_x, max_y):
     """Set up the game screen.
@@ -123,7 +123,7 @@ class Drawer:
     """
     self.scorecard_size = 40
     self.display = pygame.display.set_mode(
-      (max_x * size, max_y * size + self.scorecard_size))
+        (max_x * size, max_y * size + self.scorecard_size))
     self.screen = pygame.Surface((max_x * size, max_y * size)).convert()
     self.scorecard = pygame.Surface((max_x * size, 64)).convert()
 
@@ -166,7 +166,6 @@ class Drawer:
                           ((self.max_x * self.size - self.score_text.get_width()) / 2,
                            (self.scorecard_size - self.score_text.get_height()) / 2))
 
-
   def draw(self, image, x, y, obstacle=False):
     """Put an image on the screen at some location.
 
@@ -184,14 +183,14 @@ class Drawer:
       self.obstacles.add((x, y))
 
   def pixels(self, index):
-     """Take a grid square and returns coords of its top left hand corner.
+    """Take a grid square and returns coords of its top left hand corner.
 
-     Args:
+    Args:
       index: (int) How many squares across or down.
-     Returns:
+    Returns:
       (int) How many pixels.
-     """
-     return index * self.size
+    """
+    return index * self.size
 
   def in_bounds(self, pos):
     """Return whether the coordinates are inside the screen dimensions.
@@ -220,11 +219,12 @@ class Drawer:
         continue
       return (x, y)
 
-class AmazingMoanaGame:
+class AmazingMoanaGame(object):
   """OMG IT IS SO AMAZING."""
 
   def __init__(self, square_size=64, max_x=15, max_y=7,
                moana_image="images/babymoana.jpg",
+               maui_image="images/maui.jpg",
                shells_image="images/shell.png",
                mud_image="images/mud.png"):
     """Set up the game.
@@ -239,7 +239,7 @@ class AmazingMoanaGame:
       square_size: (int) the size of each grid square. The images on the grid
                    should be square and should be this size or it'll look like a mess.
       max_x, max_y: (int) how many squares on each side of the grid.
-      moana_image: (string) filename of the image that moves around finding things.
+      moana_image, maui_image: (string) filenames of the images that move around finding things.
       shells_image: (string) filename of the image that gets found
       mud_image: (string) filename of the image that represents an obstacle
     """
@@ -251,12 +251,15 @@ class AmazingMoanaGame:
     self.done = False
     self.drawer = Drawer(square_size, max_x, max_y)
     self.moana = MovingThing(self.get_image(moana_image), self.drawer)
+    self.maui = MovingThing(self.get_image(maui_image), self.drawer, x=max_x - 1)
     self.mud = StationaryThings(self.get_image(mud_image), self.drawer, obstacle=True)
     self.mud.place_randomly(15)
     self.shells = StationaryThings(self.get_image(shells_image), self.drawer)
-    self.shells.place_randomly(7)
+    self.shells.place_randomly(50)
     self.drawer.set_background((0, 0, 255))  # blue
     self.drawer.set_score("Find all the shells!")
+    self.maui_score = 0
+    self.moana_score = 0
 
   def run(self):
     """The main game loop. Draw stuff and look for events."""
@@ -266,8 +269,14 @@ class AmazingMoanaGame:
       self.mud.draw()
       self.shells.draw()
       self.moana.draw()
+      self.maui.draw()
       if self.shells.is_at(self.moana.pos()):
         self.shells.delete(self.moana.pos())
+        self.moana_score += 1
+        self.set_score()
+      if self.shells.is_at(self.maui.pos()):
+        self.shells.delete(self.maui.pos())
+        self.maui_score += 1
         self.set_score()
       self.drawer.show_messages()
       pygame.display.flip()
@@ -275,20 +284,22 @@ class AmazingMoanaGame:
 
   def win(self):
     """Set a winning message for winners."""
-    pygame.mixer.music.load("sounds/ididit.wav")
+    pygame.mixer.music.load("sounds/we_did_it.wav")
     pygame.mixer.music.play()
     self.drawer.set_background((0, 255, 0))  # green
-    self.drawer.set_score("You did it!! Press y to play again.")
 
   def set_score(self):
     count = self.shells.count()
+    score_str = "Moana: %d, Maui: %d" % (self.moana_score, self.maui_score)
     if count == 0:
+      self.drawer.set_score("You did it!! %s   GREAT TEAM WORK! Press y to play again." %
+                            score_str)
       self.win()
       return
     if count == 1:
-      self.drawer.set_score("Only 1 shell left!")
+      self.drawer.set_score("Only 1 shell left! %s" % score_str)
       return
-    self.drawer.set_score("%d shells left!" % count)
+    self.drawer.set_score("%d shells left! %s" % (count, score_str))
 
   def check_events(self):
     """Check for keypresses and take actions based on them."""
@@ -304,6 +315,15 @@ class AmazingMoanaGame:
         self.moana.move_left()
       if pressed[pygame.K_RIGHT]:
         self.moana.move_right()
+      if pressed[pygame.K_w]:
+        self.maui.move_up()
+      if pressed[pygame.K_s]:
+        self.maui.move_down()
+      if pressed[pygame.K_a]:
+        self.maui.move_left()
+      if pressed[pygame.K_d]:
+        self.maui.move_right()
+
       if pressed[pygame.K_ESCAPE]:
         self.done = True
       if pressed[pygame.K_y]:
@@ -319,7 +339,7 @@ class AmazingMoanaGame:
       (pygame.Surface) blittable image.
     """
     image = self.image_lib.get(filename)
-    if image == None:
+    if image is None:
       image = pygame.image.load(filename)
     return image
 
