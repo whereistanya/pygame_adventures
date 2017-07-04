@@ -1,4 +1,7 @@
-moana.py is a small extremely stupid game for learning pygame.
+moana.py is a small extremely stupid game because I wanted to learn pygame.
+
+
+![screenshot](/images/screenshot.jpg)
 
 Warning: it makes sounds.
 
