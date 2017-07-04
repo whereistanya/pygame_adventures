@@ -133,7 +133,6 @@ class Drawer:
     self.size = size
     self.max_x = max_x         # How many squares across.
     self.max_y = max_y         # How many qsuares down.
-    self.center_text = None
     self.score_text = None
 
   def set_background(self, rgb):
@@ -142,15 +141,6 @@ class Drawer:
       rgb: (short, short, short) tuple of 0-255 values for red, green, blue.
     """
     self.background = rgb
-
-  def set_message(self, message):
-    """Set the center text message.
-
-    Args:
-      message: (str) text to display.
-    """
-    font = pygame.font.SysFont("verdana", 36)
-    self.center_text = font.render(message, True, (255, 255, 255))
 
   def set_score(self, message):
     """Set the scorecard message.
@@ -171,13 +161,10 @@ class Drawer:
     self.scorecard.fill((0, 0, 0))
 
   def show_messages(self):
-    if self.center_text:
-      self.screen.blit(self.center_text,
-                       ((self.max_x * self.size - self.center_text.get_width()) / 2,
-                        (self.max_y * self.size - self.center_text.get_height()) / 2))
     if self.score_text:
       self.scorecard.blit(self.score_text,
-                          (0, (self.scorecard_size - self.score_text.get_height()) / 2))
+                          ((self.max_x * self.size - self.score_text.get_width()) / 2,
+                           (self.scorecard_size - self.score_text.get_height()) / 2))
 
 
   def draw(self, image, x, y, obstacle=False):
@@ -269,8 +256,7 @@ class AmazingMoanaGame:
     self.shells = StationaryThings(self.get_image(shells_image), self.drawer)
     self.shells.place_randomly(7)
     self.drawer.set_background((0, 0, 255))  # blue
-    self.drawer.set_message("Find all the shells!")
-    self.set_score()
+    self.drawer.set_score("Find all the shells!")
 
   def run(self):
     """The main game loop. Draw stuff and look for events."""
@@ -292,8 +278,7 @@ class AmazingMoanaGame:
     pygame.mixer.music.load("sounds/ididit.wav")
     pygame.mixer.music.play()
     self.drawer.set_background((0, 255, 0))  # green
-    self.drawer.set_score("You did it!!")
-    self.drawer.set_message("Hurray! Press y to play again.")
+    self.drawer.set_score("You did it!! Press y to play again.")
 
   def set_score(self):
     count = self.shells.count()
