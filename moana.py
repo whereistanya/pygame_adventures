@@ -121,14 +121,20 @@ class Drawer:
       size: (int) size of each square.
       max_x, max_y: (int) how many squares in each direction.
     """
-    self.screen = pygame.display.set_mode((max_x * size, max_y * size))
+    self.scorecard_size = 40
+    self.display = pygame.display.set_mode(
+      (max_x * size, max_y * size + self.scorecard_size))
+    self.screen = pygame.Surface((max_x * size, max_y * size)).convert()
+    self.scorecard = pygame.Surface((max_x * size, 64)).convert()
+
     self.background = (0, 0, 0)  # rgb (black)
     self.occupied = set()
     self.obstacles = set()
     self.size = size
     self.max_x = max_x         # How many squares across.
     self.max_y = max_y         # How many qsuares down.
-    self.center_text = ""
+    self.center_text = None
+    self.score_text = None
 
   def set_background(self, rgb):
     """Set the background color.
@@ -146,17 +152,32 @@ class Drawer:
     font = pygame.font.SysFont("verdana", 36)
     self.center_text = font.render(message, True, (255, 255, 255))
 
+  def set_score(self, message):
+    """Set the scorecard message.
+
+    Args:
+      message: (str) text to display.
+    """
+    font = pygame.font.SysFont("verdana", 16)
+    self.score_text = font.render(message, True, (255, 255, 255))
+
   def fill(self):
     """Completely fill the screen with the background color and any messages."""
+    self.display.blit(self.screen, (0, 0))
+    self.display.blit(self.scorecard, (0, self.max_y * self.size))
     self.occupied.clear()
     self.obstacles.clear()
     self.screen.fill(self.background)
+    self.scorecard.fill((0, 0, 0))
 
   def show_messages(self):
     if self.center_text:
       self.screen.blit(self.center_text,
                        ((self.max_x * self.size - self.center_text.get_width()) / 2,
                         (self.max_y * self.size - self.center_text.get_height()) / 2))
+    if self.score_text:
+      self.scorecard.blit(self.score_text,
+                          (0, (self.scorecard_size - self.score_text.get_height()) / 2))
 
 
   def draw(self, image, x, y, obstacle=False):
@@ -246,9 +267,10 @@ class AmazingMoanaGame:
     self.mud = StationaryThings(self.get_image(mud_image), self.drawer, obstacle=True)
     self.mud.place_randomly(15)
     self.shells = StationaryThings(self.get_image(shells_image), self.drawer)
-    self.shells.place_randomly(5)
+    self.shells.place_randomly(7)
     self.drawer.set_background((0, 0, 255))  # blue
     self.drawer.set_message("Find all the shells!")
+    self.set_score()
 
   def run(self):
     """The main game loop. Draw stuff and look for events."""
@@ -260,19 +282,28 @@ class AmazingMoanaGame:
       self.moana.draw()
       if self.shells.is_at(self.moana.pos()):
         self.shells.delete(self.moana.pos())
-        if self.shells.count() == 0:
-          pygame.mixer.music.load("sounds/ididit.wav")
-          pygame.mixer.music.play()
-          self.win()
-
+        self.set_score()
       self.drawer.show_messages()
       pygame.display.flip()
       self.clock.tick(60)
 
   def win(self):
     """Set a winning message for winners."""
+    pygame.mixer.music.load("sounds/ididit.wav")
+    pygame.mixer.music.play()
     self.drawer.set_background((0, 255, 0))  # green
+    self.drawer.set_score("You did it!!")
     self.drawer.set_message("Hurray! Press y to play again.")
+
+  def set_score(self):
+    count = self.shells.count()
+    if count == 0:
+      self.win()
+      return
+    if count == 1:
+      self.drawer.set_score("Only 1 shell left!")
+      return
+    self.drawer.set_score("%d shells left!" % count)
 
   def check_events(self):
     """Check for keypresses and take actions based on them."""
