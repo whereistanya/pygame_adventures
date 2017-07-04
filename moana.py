@@ -308,21 +308,21 @@ class AmazingMoanaGame(object):
         self.done = True
       pressed = pygame.key.get_pressed()
       if pressed[pygame.K_UP]:
-        self.moana.move_up()
-      if pressed[pygame.K_DOWN]:
-        self.moana.move_down()
-      if pressed[pygame.K_LEFT]:
-        self.moana.move_left()
-      if pressed[pygame.K_RIGHT]:
-        self.moana.move_right()
-      if pressed[pygame.K_w]:
         self.maui.move_up()
-      if pressed[pygame.K_s]:
+      if pressed[pygame.K_DOWN]:
         self.maui.move_down()
-      if pressed[pygame.K_a]:
+      if pressed[pygame.K_LEFT]:
         self.maui.move_left()
-      if pressed[pygame.K_d]:
+      if pressed[pygame.K_RIGHT]:
         self.maui.move_right()
+      if pressed[pygame.K_w]:
+        self.moana.move_up()
+      if pressed[pygame.K_s]:
+        self.moana.move_down()
+      if pressed[pygame.K_a]:
+        self.moana.move_left()
+      if pressed[pygame.K_d]:
+        self.moana.move_right()
 
       if pressed[pygame.K_ESCAPE]:
         self.done = True
