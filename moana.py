@@ -82,6 +82,7 @@ class MovingThing(object):
     self.image = image
     self.x = x
     self.y = y
+    self.score = 0
 
   def pos(self):
     """Return current location.
@@ -110,7 +111,6 @@ class MovingThing(object):
   def move_right(self):
     if self.drawer.in_bounds((self.x + 1, self.y)):
       self.x += 1
-
 
 class Drawer(object):
   """The class that does the drawing!"""
@@ -142,7 +142,7 @@ class Drawer(object):
     """
     self.background = rgb
 
-  def set_score(self, message):
+  def update_score_text(self, message):
     """Set the scorecard message.
 
     Args:
@@ -257,9 +257,7 @@ class AmazingMoanaGame(object):
     self.shells = StationaryThings(self.get_image(shells_image), self.drawer)
     self.shells.place_randomly(50)
     self.drawer.set_background((0, 0, 255))  # blue
-    self.drawer.set_score("Find all the shells!")
-    self.maui_score = 0
-    self.moana_score = 0
+    self.drawer.update_score_text("Find all the shells!")
 
   def run(self):
     """The main game loop. Draw stuff and look for events."""
@@ -272,12 +270,12 @@ class AmazingMoanaGame(object):
       self.maui.draw()
       if self.shells.is_at(self.moana.pos()):
         self.shells.delete(self.moana.pos())
-        self.moana_score += 1
-        self.set_score()
+        self.moana.score += 1
+        self.update_score_text()
       if self.shells.is_at(self.maui.pos()):
         self.shells.delete(self.maui.pos())
-        self.maui_score += 1
-        self.set_score()
+        self.maui.score += 1
+        self.update_score_text()
       self.drawer.show_messages()
       pygame.display.flip()
       self.clock.tick(60)
@@ -288,18 +286,19 @@ class AmazingMoanaGame(object):
     pygame.mixer.music.play()
     self.drawer.set_background((0, 255, 0))  # green
 
-  def set_score(self):
+  def update_score_text(self):
     count = self.shells.count()
-    score_str = "Moana: %d, Maui: %d" % (self.moana_score, self.maui_score)
+    score_str = "Moana: %d, Maui: %d" % (self.moana.score, self.maui.score)
     if count == 0:
-      self.drawer.set_score("You did it!! %s   GREAT TEAM WORK! Press y to play again." %
-                            score_str)
+      self.drawer.update_score_text(
+          "You did it!! %s   GREAT TEAM WORK! Press y to play again." %
+          score_str)
       self.win()
       return
     if count == 1:
-      self.drawer.set_score("Only 1 shell left! %s" % score_str)
+      self.drawer.update_score_text("Only 1 shell left! %s" % score_str)
       return
-    self.drawer.set_score("%d shells left! %s" % (count, score_str))
+    self.drawer.update_score_text("%d shells left! %s" % (count, score_str))
 
   def check_events(self):
     """Check for keypresses and take actions based on them."""
@@ -307,6 +306,7 @@ class AmazingMoanaGame(object):
       if event.type == pygame.QUIT:
         self.done = True
       pressed = pygame.key.get_pressed()
+      # move maui
       if pressed[pygame.K_UP]:
         self.maui.move_up()
       if pressed[pygame.K_DOWN]:
@@ -315,6 +315,7 @@ class AmazingMoanaGame(object):
         self.maui.move_left()
       if pressed[pygame.K_RIGHT]:
         self.maui.move_right()
+      # move moana
       if pressed[pygame.K_w]:
         self.moana.move_up()
       if pressed[pygame.K_s]:
@@ -324,6 +325,7 @@ class AmazingMoanaGame(object):
       if pressed[pygame.K_d]:
         self.moana.move_right()
 
+      # quit/restart
       if pressed[pygame.K_ESCAPE]:
         self.done = True
       if pressed[pygame.K_y]:
