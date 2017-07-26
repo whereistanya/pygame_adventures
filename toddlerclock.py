@@ -11,6 +11,9 @@ BLACK = ((0, 0, 0))
 RED = ((255, 0, 0))
 BLUE = ((5, 20, 114))
 GREEN = ((52, 114, 5))
+ORANGE = ((239, 103, 19))
+PINK = ((178, 53, 161))
+INDIGO = ((59, 33, 135))
 
 class ToddlerClock(object):
   """Display the time with a message."""
@@ -27,6 +30,9 @@ class ToddlerClock(object):
     self.bottom = 200
     pygame.init()
     pygame.mouse.set_visible(False)
+    #  If this hangs here, it's because something else is using the screen. Ctrl-C
+    #  will bypass that, or adding an alarm as described at
+    #  https://stackoverflow.com/questions/17035699/pygame-requires-keyboard-interrupt-to-init-display
     self.screen = pygame.display.set_mode((self.x, self.y))
     self.clocksurface = pygame.Surface((self.x, self.bottom)).convert()
     self.messagesurface = pygame.Surface((self.x, self.y - self.bottom)).convert()
@@ -44,18 +50,43 @@ class ToddlerClock(object):
       now = time.localtime()
       nowstr = self.bigfont.render("%.2d:%.2d" % (now.tm_hour, now.tm_min),
                                    True, WHITE)
-      if now.tm_hour < 6:
+
+      hour = now.tm_hour
+      minute = now.tm_min
+      day = now.tm_wday  # monday is 0
+
+      if hour < 6:
         color = BLACK
         message = self.smallfont.render(
-            "Too early. Go back to sleep, Biz.", True, RED) # red
-      elif now.tm_hour < 7:
+            "Too early. Go back to sleep, Biz.", True, RED)
+      elif hour < 7:
         color = BLUE
         message = self.smallfont.render(
-            "It's early, but reading is ok.", True, WHITE)
-      else:
+            "Time to read, Biz.", True, WHITE)
+      elif hour < 8:
         color = GREEN
         message = self.smallfont.render(
-            "Hurray, it's morning!", True, WHITE)
+            "It's morning! Wake up, parents!", True, WHITE)
+      elif hour < 9 and day <= 4:
+        color = RED
+        message = self.smallfont.render(
+            "Time for school, Biz!", True, WHITE)
+      elif hour < 18:
+        color = ORANGE
+        message = self.smallfont.render(
+            "Go have fun, Biz!", True, WHITE)
+      elif hour == 18 and minute <= 30:
+        color = ORANGE
+        message = self.smallfont.render(
+            "Time for dinner, Biz!", True, WHITE)
+      elif hour < 20:
+        color = PINK
+        message = self.smallfont.render(
+            "Time for bed, Biz!", True, WHITE)
+      else:
+        color = BLACK
+        message = self.smallfont.render(
+            "Too early. Go back to sleep, Biz.", True, RED)
 
       self.draw(color, nowstr, message)
       self.clock.tick(1) # every 1s
