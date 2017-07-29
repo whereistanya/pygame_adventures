@@ -5,6 +5,8 @@ import os
 import time
 import pygame
 
+from signal import alarm, signal, SIGALRM
+
 
 WHITE = ((255, 255, 255))
 BLACK = ((0, 0, 0))
@@ -14,6 +16,14 @@ GREEN = ((52, 114, 5))
 ORANGE = ((239, 103, 19))
 PINK = ((178, 53, 161))
 INDIGO = ((59, 33, 135))
+
+class Alarm(Exception):
+  """A deadline for things that get wedged."""
+  pass
+
+def alarm_handler(signum, frame):
+  raise Alarm
+
 
 class ToddlerClock(object):
   """Display the time with a message."""
@@ -30,10 +40,16 @@ class ToddlerClock(object):
     self.bottom = 200
     pygame.init()
     pygame.mouse.set_visible(False)
-    #  If this hangs here, it's because something else is using the screen. Ctrl-C
-    #  will bypass that, or adding an alarm as described at
-    #  https://stackoverflow.com/questions/17035699/pygame-requires-keyboard-interrupt-to-init-display
-    self.screen = pygame.display.set_mode((self.x, self.y))
+    #  If this hangs, it's because something else is using the screen. Ctrl-C
+    #  here will bypass that.
+    signal(SIGALRM, alarm_handler)
+    alarm(2)
+    try:
+      print("Attempting to initialise the display. Waiting up to two seconds.")
+      self.screen = pygame.display.set_mode((self.x, self.y))
+      alarm(0)
+    except Alarm:
+      raise KeyboardInterrupt
     self.clocksurface = pygame.Surface((self.x, self.bottom)).convert()
     self.messagesurface = pygame.Surface((self.x, self.y - self.bottom)).convert()
 
