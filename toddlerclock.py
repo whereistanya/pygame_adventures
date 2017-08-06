@@ -30,11 +30,13 @@ class ToddlerClock(object):
 
   def __init__(self):
     """ """
-    # Needed to talk to the raspberry pi's PiTFT display.
+    # Needed to talk to the raspberry pi's PiTFT display. For the 7" display
+    # attached to the DSI port, comment these out.
     os.putenv('SDL_FBDEV', '/dev/fb1')
     os.putenv('SDL_MOUSEDRV', 'TSLIB')
     os.putenv('SDL_MOUSEDEV', '/dev/input/touchscreen')
 
+    # For 7" display, change to 800 and 600
     self.x = 320
     self.y = 240
     self.bottom = 200
