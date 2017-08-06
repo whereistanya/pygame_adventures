@@ -19,9 +19,9 @@ wake me. It's intended to be run on a raspberry pi with a pitft screen.
 
 ## Installing pygame for python3
 
-(Are all of these libs required? Dunno! I installed them anyway.)
+There are a bunch of libraries pygame needs. Here's what I installed:
 
 sudo apt-get install python-dev
-sudo apt-get install libsdl-dev libportmidi-dev libsdl-ttf2.0-dev libSDL_image libSDL_mixer
+sudo apt-get install libsdl-dev libportmidi-dev libsdl-ttf2.0-dev libsdl-image1.2-dev libsdl-mixer1.2-dev
 sudo apt-get install python-pip3
 sudo pip3 install pygame
