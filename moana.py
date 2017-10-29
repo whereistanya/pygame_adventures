@@ -2,6 +2,7 @@
 """An extremely pointless game to learn pygame with."""
 
 import pygame
+import random
 import time
 
 class StationaryThings(object):
@@ -279,7 +280,7 @@ class AmazingMoanaGame(object):
                moana_image="images/babymoana.jpg",
                maui_image="images/maui.jpg",
                crab_image="images/crab.jpg",
-               hook_image="images/hook.jpg",
+               hook_image="images/fishhook.jpg",
                shells_image="images/shell.png",
                mud_image="images/mud.png"):
     """Set up the game.
