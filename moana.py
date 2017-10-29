@@ -1,9 +1,8 @@
 #!/usr/bin/python3
 """An extremely pointless game to learn pygame with."""
 
-import random
-
 import pygame
+import time
 
 class StationaryThings(object):
   """Any type of unmoving thing that appears on the grid."""
@@ -92,25 +91,79 @@ class MovingThing(object):
     """
     return (self.x, self.y)
 
+  def is_at(self, pos):
+    """Return whether the thing is at this position.
+
+    Args:
+      pos: ((int, int)): tuple showing x, y position.
+    """
+    if pos == (self.x, self.y):
+      return True
+    return False
+
+
   def draw(self):
     """Instruct the drawer to draw this thing at some location."""
     self.drawer.draw(self.image, self.x, self.y)
 
-  def move_up(self):
-    if self.drawer.in_bounds((self.x, self.y - 1)):
+  def move_up(self, avoid_obstacles=True):
+    if self.drawer.in_bounds((self.x, self.y - 1), avoid_obstacles):
       self.y -= 1
+      return True
+    else:
+      return False
 
-  def move_down(self):
-    if self.drawer.in_bounds((self.x, self.y + 1)):
+  def move_down(self, avoid_obstacles=True):
+    if self.drawer.in_bounds((self.x, self.y + 1), avoid_obstacles):
       self.y += 1
+      return True
+    else:
+      return False
 
-  def move_left(self):
-    if self.drawer.in_bounds((self.x - 1, self.y)):
+  def move_left(self, avoid_obstacles=True):
+    if self.drawer.in_bounds((self.x - 1, self.y), avoid_obstacles):
       self.x -= 1
+      return True
+    else:
+      return False
 
-  def move_right(self):
-    if self.drawer.in_bounds((self.x + 1, self.y)):
+  def move_right(self, avoid_obstacles=True):
+    if self.drawer.in_bounds((self.x + 1, self.y), avoid_obstacles):
       self.x += 1
+      return True
+    else:
+      return False
+
+class SelfMovingThing(MovingThing):
+  """An icon that moves on its own."""
+  
+  def __init__(self, image, drawer, x=0, y=0, move_every=1):
+    """Set up the icon that moves to find things.
+
+    Args:
+      image: (pygame.Surface) a loaded image
+      drawer: (Drawer) an initialised Drawer to display images
+      x, y: (int) starting co=ordinates
+      move_every: (int) how often to move in seconds
+    """
+    super().__init__(image, drawer, x, y)
+    self.last_move = time.time()
+    self.moving = "down"
+    self.move_every = move_every
+
+  
+  def move_up_and_down(self):
+    now = time.time()
+    if now - self.last_move < 1:
+      return
+    if self.moving == "down":
+      if not self.move_down(avoid_obstacles=False):
+        self.moving = "up"
+    else:
+      if not self.move_up(avoid_obstacles=False):
+        self.moving = "down"
+    self.last_move = time.time()
+
 
 class Drawer(object):
   """The class that does the drawing!"""
@@ -192,7 +245,7 @@ class Drawer(object):
     """
     return index * self.size
 
-  def in_bounds(self, pos):
+  def in_bounds(self, pos, avoid_obstacles=True):
     """Return whether the coordinates are inside the screen dimensions.
     Args:
       pos: ((int, int)) x, y of squares on grid.
@@ -205,7 +258,7 @@ class Drawer(object):
     if x >= self.max_x or y >= self.max_y:
       return False
 
-    if pos in self.obstacles:
+    if avoid_obstacles and pos in self.obstacles:
       return False
     return True
 
@@ -225,6 +278,8 @@ class AmazingMoanaGame(object):
   def __init__(self, square_size=64, max_x=15, max_y=7,
                moana_image="images/babymoana.jpg",
                maui_image="images/maui.jpg",
+               crab_image="images/crab.jpg",
+               hook_image="images/hook.jpg",
                shells_image="images/shell.png",
                mud_image="images/mud.png"):
     """Set up the game.
@@ -252,12 +307,16 @@ class AmazingMoanaGame(object):
     self.drawer = Drawer(square_size, max_x, max_y)
     self.moana = MovingThing(self.get_image(moana_image), self.drawer)
     self.maui = MovingThing(self.get_image(maui_image), self.drawer, x=max_x - 1)
+    self.crab = SelfMovingThing(self.get_image(crab_image), self.drawer, x=int(max_x / 2))
+    self.hook = StationaryThings(self.get_image(hook_image), self.drawer)
+    self.hook.place_randomly(1)
     self.mud = StationaryThings(self.get_image(mud_image), self.drawer, obstacle=True)
     self.mud.place_randomly(15)
     self.shells = StationaryThings(self.get_image(shells_image), self.drawer)
     self.shells.place_randomly(50)
     self.drawer.set_background((0, 0, 255))  # blue
-    self.drawer.update_score_text("Find all the shells!")
+    self.drawer.update_score_text("Get the hook!")
+    self.has_hook = False
 
   def run(self):
     """The main game loop. Draw stuff and look for events."""
@@ -266,16 +325,39 @@ class AmazingMoanaGame(object):
       self.drawer.fill()
       self.mud.draw()
       self.shells.draw()
+      self.crab.move_up_and_down()
       self.moana.draw()
       self.maui.draw()
-      if self.shells.is_at(self.moana.pos()):
-        self.shells.delete(self.moana.pos())
-        self.moana.score += 1
-        self.update_score_text()
-      if self.shells.is_at(self.maui.pos()):
-        self.shells.delete(self.maui.pos())
-        self.maui.score += 1
-        self.update_score_text()
+      self.crab.draw()
+      self.hook.draw()
+
+      if self.has_hook:
+        if self.crab.is_at(self.moana.pos()) or self.crab.is_at(self.maui.pos()):
+          self.drawer.set_background((0, 0, 255))  #blue
+          self.has_hook = False
+          self.hook.place_randomly(1)
+          self.drawer.update_score_text("You LOST the hook!")
+
+        if self.shells.is_at(self.moana.pos()):
+          self.shells.delete(self.moana.pos())
+          self.moana.score += 1
+          self.update_score_text()
+        if self.shells.is_at(self.maui.pos()):
+          self.shells.delete(self.maui.pos())
+          self.maui.score += 1
+          self.update_score_text()
+
+      if self.hook.is_at(self.moana.pos()):
+        self.drawer.set_background((255, 102, 255))  # pink
+        self.hook.delete(self.moana.pos())
+        self.has_hook = True
+        self.drawer.update_score_text("You got the hook!")
+      if self.hook.is_at(self.maui.pos()):
+        self.drawer.set_background((255, 102, 255))  # pink
+        self.hook.delete(self.maui.pos())
+        self.has_hook = True
+        self.drawer.update_score_text("You got the hook!")
+
       self.drawer.show_messages()
       pygame.display.flip()
       self.clock.tick(60)
