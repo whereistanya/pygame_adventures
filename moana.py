@@ -10,7 +10,7 @@ import things
 class AmazingMoanaGame(object):
   """OMG IT IS SO AMAZING."""
 
-  def __init__(self, square_size=64, max_x=15, max_y=7,
+  def __init__(self, square_size=128, max_x=15, max_y=7,
                moana_image="images/babymoana.jpg",
                maui_image="images/maui.jpg",
                sharkhead_image="images/maui_sharkhead.jpg",
@@ -63,10 +63,10 @@ class AmazingMoanaGame(object):
       self.mud.draw()
       self.shells.draw()
       self.crab.move_up_and_down()
+      self.hook.draw()
       self.moana.draw()
       self.maui.draw()
       self.crab.draw()
-      self.hook.draw()
 
       if self.has_hook:
         if self.crab.is_at(self.moana.pos()) or self.crab.is_at(self.maui.pos()):
@@ -85,11 +85,7 @@ class AmazingMoanaGame(object):
           self.maui.score += 1
           self.update_score_text()
 
-      if self.hook.is_at(self.moana.pos()):
-        self.drawer.set_background((255, 102, 255))  # pink
-        self.hook.delete(self.moana.pos())
-        self.has_hook = True
-        self.drawer.update_score_text("You got the hook!")
+      # Only Maui can get the hook.
       if self.hook.is_at(self.maui.pos()):
         self.drawer.set_background((255, 102, 255))  # pink
         self.hook.delete(self.maui.pos())
