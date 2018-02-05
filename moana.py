@@ -13,6 +13,7 @@ class AmazingMoanaGame(object):
   def __init__(self, square_size=64, max_x=15, max_y=7,
                moana_image="images/babymoana.jpg",
                maui_image="images/maui.jpg",
+               sharkhead_image="images/maui_sharkhead.jpg",
                crab_image="images/crab.jpg",
                hook_image="images/fishhook.jpg",
                shells_image="images/shell.png",
@@ -41,7 +42,8 @@ class AmazingMoanaGame(object):
     self.done = False
     self.drawer = drawer.Drawer(square_size, max_x, max_y)
     self.moana = things.MovingThing(self.get_image(moana_image), self.drawer)
-    self.maui = things.MovingThing(self.get_image(maui_image), self.drawer, x=max_x - 1)
+    self.maui = things.MovingThing(self.get_image(sharkhead_image), self.drawer, x=max_x - 1)
+    self.maui.add_replacement_image(self.get_image(maui_image))
     self.crab = things.SelfMovingThing(self.get_image(crab_image), self.drawer, x=int(max_x / 2))
     self.hook = things.StationaryThings(self.get_image(hook_image), self.drawer)
     self.hook.place_randomly(1)
@@ -71,6 +73,7 @@ class AmazingMoanaGame(object):
           self.drawer.set_background((0, 0, 255))  #blue
           self.has_hook = False
           self.hook.place_randomly(1)
+          self.maui.set_default_image()
           self.drawer.update_score_text("You LOST the hook!")
 
         if self.shells.is_at(self.moana.pos()):
@@ -90,6 +93,7 @@ class AmazingMoanaGame(object):
       if self.hook.is_at(self.maui.pos()):
         self.drawer.set_background((255, 102, 255))  # pink
         self.hook.delete(self.maui.pos())
+        self.maui.set_replacement_image()
         self.has_hook = True
         self.drawer.update_score_text("You got the hook!")
 
@@ -102,13 +106,14 @@ class AmazingMoanaGame(object):
     pygame.mixer.music.load("sounds/we_did_it.wav")
     pygame.mixer.music.play()
     self.drawer.set_background((0, 255, 0))  # green
+    self.crab.stop()
 
   def update_score_text(self):
     count = self.shells.count()
     score_str = "Moana: %d, Maui: %d" % (self.moana.score, self.maui.score)
     if count == 0:
       self.drawer.update_score_text(
-          "You did it!! %s   GREAT TEAM WORK! Press y to play again." %
+          "You did it!! %s   GREAT TEAM WORK! Press y to play again, q to quit." %
           score_str)
       self.win()
       return
@@ -132,6 +137,7 @@ class AmazingMoanaGame(object):
         self.maui.move_left()
       if pressed[pygame.K_RIGHT]:
         self.maui.move_right()
+
       # move moana
       if pressed[pygame.K_w]:
         self.moana.move_up()
@@ -144,6 +150,8 @@ class AmazingMoanaGame(object):
 
       # quit/restart
       if pressed[pygame.K_ESCAPE]:
+        self.done = True
+      if pressed[pygame.K_q]:
         self.done = True
       if pressed[pygame.K_y]:
         # start the game again

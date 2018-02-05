@@ -76,6 +76,7 @@ class MovingThing(object):
     """
     self.drawer = drawer
     self.image = image
+    self.images = { "default" : image}
     self.x = x
     self.y = y
     self.score = 0
@@ -98,6 +99,30 @@ class MovingThing(object):
       return True
     return False
 
+  def add_replacement_image(self, image):
+    """Add an alternative image to use in some situations.
+
+    This could be expanded to have multiple named images but for now it's just
+    the default or the replacement.
+
+    Args:
+      image: (pygame.Surface) a loaded image
+    """
+    self.images["replacement"] = image
+
+  def set_replacement_image(self):
+    """Replace the MovingThing's image with the alternate."""
+    try:
+      self.image = self.images["replacement"]
+    except KeyError:
+      print("No replacement image.")
+
+  def set_default_image(self):
+    """Replace the MovingThing's image with the default."""
+    try:
+      self.image = self.images["default"]
+    except KeyError:
+      print("No default image.")
 
   def draw(self):
     """Instruct the drawer to draw this thing at some location."""
@@ -147,9 +172,14 @@ class SelfMovingThing(MovingThing):
     self.last_move = time.time()
     self.moving = "down"
     self.move_every = move_every
+    self.stopped = False
 
+  def stop(self):
+    self.stopped = True
   
   def move_up_and_down(self):
+    if self.stopped:
+      return
     now = time.time()
     if now - self.last_move < 1:
       return
