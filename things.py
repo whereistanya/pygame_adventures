@@ -68,7 +68,7 @@ class StationaryThings(object):
 
 class MovingThing(object):
   """An icon that moves around."""
-  def __init__(self, image, drawer, x=-1, y=-1):
+  def __init__(self, image, drawer, x=-1, y=-1, capacity=8):
     """Set up the icon that moves to find things.
 
     Args:
@@ -84,6 +84,9 @@ class MovingThing(object):
     self.images["frozen"] = dark
 
     self.frozen = False
+    self.capacity = capacity
+    self.carrying = 0
+
     self.score = 0
     (self.x, self.y) = self.drawer.random_square(default_x=x, default_y=y)
     self.draw()  # Initial draw to make the drawer consider these squares

@@ -21,10 +21,14 @@ class AmazingMoanaGame(object):
                sharkhead_image="images/maui_by_biz.jpg",
                crab_image="images/crab_by_biz.jpg",
                dad_image="images/moana_dad.jpg",
+               lava_image="images/lava_monster_by_biz.jpg",
+               island_image="images/tifiti_by_biz.jpg",
                hook_image="images/fishhook.jpg",
                boat_image="images/boat.jpg",
+               heart_image="images/heart_by_biz.jpg",
+               shell_bin_image="images/shell_bin_by_biz.jpg",
                shells_image="images/shell.png",
-               mud_image="images/mud.png"):
+               mud_image="images/lava_by_biz.jpg"):
     """Set up the game.
 
     Add one Moana character, a bunch of shells and a bunch of obstacles. Beware:
@@ -59,21 +63,32 @@ class AmazingMoanaGame(object):
     self.boat = things.StationaryThings(self.get_image(boat_image), self.drawer)
     self.boat.place_randomly(1)
 
+    self.heart = things.StationaryThings(self.get_image(heart_image), self.drawer)
+
+    self.shell_bin = things.StationaryThings(self.get_image(shell_bin_image), self.drawer)
+    self.shell_bin.place_randomly(1)
+
     self.moana = things.MovingThing(self.get_image(moana_image), self.drawer, x=0)
     self.moana.add_replacement_image(self.get_image(moana_boat_image))
     self.maui = things.MovingThing(self.get_image(sharkhead_image), self.drawer, x=max_x - 1)
     self.maui.add_replacement_image(self.get_image(maui_image))
+
+    self.island = things.MovingThing(self.get_image(lava_image), self.drawer, x=0, y=0)
+    self.island.add_replacement_image(self.get_image(island_image))
 
     self.drawer.set_background((255, 64, 0))  # orange
     self.drawer.update_score_text("Get the hook!")
     self.has_hook = False
     self.has_boat = False
 
+
   def run(self):
     """The main game loop. Draw stuff and look for events."""
     while not self.done:
       self.check_events()
       self.drawer.fill()
+      self.heart.draw()
+      self.island.draw()
       self.shells.draw()
       self.mud.draw()
       self.crab.move_up_and_down()
@@ -84,9 +99,10 @@ class AmazingMoanaGame(object):
       self.maui.draw()
       self.crab.draw()
       self.dad.draw()
+      self.shell_bin.draw()
 
       if self.has_hook:
-        if self.crab.is_at(self.moana.pos()) or self.crab.is_at(self.maui.pos()):
+        if self.crab.is_at(self.maui.pos()):
           self.drawer.set_background((255, 64, 0))  # orange
           self.has_hook = False
           self.hook.place_randomly(1)
@@ -94,7 +110,7 @@ class AmazingMoanaGame(object):
           self.drawer.update_score_text("You LOST the hook!")
 
       if self.has_boat:
-        if self.dad.is_at(self.moana.pos()) or self.dad.is_at(self.maui.pos()):
+        if self.dad.is_at(self.moana.pos()):
           self.drawer.set_background((255, 64, 0))  # orange
           self.has_boat = False
           self.boat.place_randomly(1)
@@ -102,17 +118,42 @@ class AmazingMoanaGame(object):
           self.drawer.update_score_text("You LOST the boat!")
 
 
-      # Can't get shells if Maui doesn't have the hook or Moana doesn't have the
-      # boat.
+      # Can't get shells if Maui doesn't have the hook or Moana doesn't have the boat.
       if self.has_hook and self.has_boat:
         if self.shells.is_at(self.moana.pos()):
           self.shells.delete(self.moana.pos())
-          self.moana.score += 1
-          self.update_score_text()
+          self.moana.carrying += 1
+          if self.moana.carrying >= self.moana.capacity:
+            self.shells.place_randomly(1)
+            self.drawer.update_score_text("OH NO! MOANA DROPPED A SHELL!")
+          else:
+            self.moana.score += 1
+            self.update_score_text()
+
         if self.shells.is_at(self.maui.pos()):
           self.shells.delete(self.maui.pos())
-          self.maui.score += 1
-          self.update_score_text()
+          self.maui.carrying += 1
+          if self.maui.carrying >= self.maui.capacity:
+            self.shells.place_randomly(1)
+            self.drawer.update_score_text("OH NO! MAUI DROPPED A SHELL!")
+          else:
+            self.maui.score += 1
+            self.update_score_text()
+
+      if self.shell_bin.is_at(self.maui.pos()):
+        self.maui.carrying = 0
+        self.drawer.update_score_text("HURRAY! Now I can't lose shells any more!")
+
+      if self.shell_bin.is_at(self.moana.pos()):
+        self.moana.carrying = 0
+        self.drawer.update_score_text("HURRAY! Now I can't lose shells any more!")
+
+
+      # Only Moana can get the heart.
+      if self.heart.is_at(self.moana.pos()):
+        self.island.set_replacement_image()
+        score_str = "TEFITI HAS HER HEART BACK! Moana: %d, Maui: %d" % (self.moana.score, self.maui.score)
+        self.win(score_str)
 
       # Only Maui can get the hook.
       if self.hook.is_at(self.maui.pos()):
@@ -150,7 +191,6 @@ class AmazingMoanaGame(object):
         if self.has_hook:
           self.hook.place_randomly(1)
           self.has_hook = False
-
 
       # If both are frozen, the game is over.
       if self.moana.frozen and self.maui.frozen:
@@ -192,9 +232,10 @@ class AmazingMoanaGame(object):
 
   def update_score_text(self):
     count = self.shells.count()
-    score_str = "Moana: %d, Maui: %d" % (self.moana.score, self.maui.score)
+    score_str = "Moana: %d (%d), Maui: %d (%d)" % (
+      self.moana.carrying, self.moana.score, self.maui.carrying, self.maui.score)
     if count == 0:
-      self.win(score_str)
+      self.heart.place_randomly(1)
       return
     if count == 1:
       self.drawer.update_score_text("Only 1 shell left! %s" % score_str)
