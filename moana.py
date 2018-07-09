@@ -20,6 +20,7 @@ class AmazingMoanaGame(object):
                maui_image="images/maui_bird_by_biz.jpg",
                sharkhead_image="images/maui_by_biz.jpg",
                crab_image="images/crab_by_biz.jpg",
+               dad_image="images/moana_dad.jpg",
                hook_image="images/fishhook.jpg",
                boat_image="images/boat.jpg",
                shells_image="images/shell.png",
@@ -44,11 +45,15 @@ class AmazingMoanaGame(object):
     self.image_lib = {}
     self.done = False
     self.drawer = drawer.Drawer(square_size, max_x, max_y)
+
     self.crab = things.SelfMovingThing(self.get_image(crab_image), self.drawer, x=int(max_x / 2))
+    self.dad = things.SelfMovingThing(self.get_image(dad_image), self.drawer, y=int(max_y / 2))
+
     self.mud = things.StationaryThings(self.get_image(mud_image), self.drawer, obstacle=True)
     self.mud.place_randomly(15)
     self.shells = things.StationaryThings(self.get_image(shells_image), self.drawer)
     self.shells.place_randomly(50)
+
     self.hook = things.StationaryThings(self.get_image(hook_image), self.drawer)
     self.hook.place_randomly(1)
     self.boat = things.StationaryThings(self.get_image(boat_image), self.drawer)
@@ -72,19 +77,30 @@ class AmazingMoanaGame(object):
       self.shells.draw()
       self.mud.draw()
       self.crab.move_up_and_down()
+      self.dad.move_over_and_back()
       self.hook.draw()
       self.boat.draw()
       self.moana.draw()
       self.maui.draw()
       self.crab.draw()
+      self.dad.draw()
 
       if self.has_hook:
         if self.crab.is_at(self.moana.pos()) or self.crab.is_at(self.maui.pos()):
-          self.drawer.set_background((0, 0, 255))  #blue
+          self.drawer.set_background((255, 64, 0))  # orange
           self.has_hook = False
           self.hook.place_randomly(1)
           self.maui.set_default_image()
           self.drawer.update_score_text("You LOST the hook!")
+
+      if self.has_boat:
+        if self.dad.is_at(self.moana.pos()) or self.dad.is_at(self.maui.pos()):
+          self.drawer.set_background((255, 64, 0))  # orange
+          self.has_boat = False
+          self.boat.place_randomly(1)
+          self.moana.set_default_image()
+          self.drawer.update_score_text("You LOST the boat!")
+
 
       # Can't get shells if Maui doesn't have the hook or Moana doesn't have the
       # boat.
@@ -163,6 +179,7 @@ class AmazingMoanaGame(object):
         score_str)
     self.drawer.set_background((0, 255, 0))  # green
     self.crab.stop()
+    self.dad.stop()
 
   def lose(self, score_str):
     """Set a losing message for losers."""
@@ -170,6 +187,7 @@ class AmazingMoanaGame(object):
         "AWWW WE LOST. %s Press y to play again, q to quit." % score_str)
     self.drawer.set_background((0, 0, 0))  # black
     self.crab.stop()
+    self.dad.stop()
 
 
   def update_score_text(self):

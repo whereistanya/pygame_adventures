@@ -103,7 +103,7 @@ class Drawer(object):
       return False
     return True
 
-  def random_square(self, avoid_obstacles=True, column=-1):
+  def random_square(self, avoid_obstacles=True, default_x=-1, default_y=-1):
     """Return a random square, optionally one without anything in it.
 
     TODO: This will loop forever if a column and avoid_obstacles are both
@@ -113,14 +113,22 @@ class Drawer(object):
       avoid_obstacles: (bool) only choose squares that don't already have
                       something
       column: (int) choose a square with this x-value.
+    Return:
+      ((int, int)): tuple of (x, y) coordinate.
     """
+    if default_x >=0 and default_y >= 0:
+      # we'll "randomly" choose the exact square you told us to.
+      return (default_x, default_y)
+
     while True:
-      if column >= 0:
-        x = column
-      else:
+      x = default_x
+      y = default_y
+      if x < 0:
         x = random.randint(0, self.max_x -1)
-      y = random.randint(0, self.max_y -1)
+      if y < 0:
+        y = random.randint(0, self.max_y -1)
       if avoid_obstacles and (x, y) in self.obstacles:
         # there's already a thing there; try again
         continue
+
       return (x, y)

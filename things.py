@@ -68,7 +68,7 @@ class StationaryThings(object):
 
 class MovingThing(object):
   """An icon that moves around."""
-  def __init__(self, image, drawer, x=0):
+  def __init__(self, image, drawer, x=-1, y=-1):
     """Set up the icon that moves to find things.
 
     Args:
@@ -85,7 +85,7 @@ class MovingThing(object):
 
     self.frozen = False
     self.score = 0
-    (self.x, self.y) = self.drawer.random_square(column=x)  # randomness only used for y
+    (self.x, self.y) = self.drawer.random_square(default_x=x, default_y=y)
     self.draw()  # Initial draw to make the drawer consider these squares
                    # occupied
 
@@ -184,7 +184,7 @@ class MovingThing(object):
 class SelfMovingThing(MovingThing):
   """An icon that moves on its own."""
 
-  def __init__(self, image, drawer, x=0, move_every=1):
+  def __init__(self, image, drawer, x=-1, y=-1, move_every=1):
     """Set up the icon that moves to find things.
 
     Args:
@@ -193,9 +193,9 @@ class SelfMovingThing(MovingThing):
       x, y: (int) starting co=ordinates
       move_every: (int) how often to move in seconds
     """
-    super().__init__(image, drawer, x)
+    super().__init__(image, drawer, x, y)
     self.last_move = time.time()
-    self.moving = "down"
+    self.direction = "down"
     self.move_every = move_every
     self.stopped = False
 
@@ -208,10 +208,24 @@ class SelfMovingThing(MovingThing):
     now = time.time()
     if now - self.last_move < 1:
       return
-    if self.moving == "down":
+    if self.direction == "down":
       if not self.move_down(avoid_obstacles=False):
-        self.moving = "up"
+        self.direction = "up"
     else:
       if not self.move_up(avoid_obstacles=False):
-        self.moving = "down"
+        self.direction = "down"
+    self.last_move = time.time()
+
+  def move_over_and_back(self):
+    if self.stopped:
+      return
+    now = time.time()
+    if now - self.last_move < 1:
+      return
+    if self.direction == "right":
+      if not self.move_right(avoid_obstacles=False):
+        self.direction = "left"
+    else:
+      if not self.move_left(avoid_obstacles=False):
+        self.direction = "right"
     self.last_move = time.time()
