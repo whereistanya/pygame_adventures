@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import time
+import pygame
 
 class StationaryThings(object):
   """Any type of unmoving thing that appears on the grid."""
@@ -67,19 +68,26 @@ class StationaryThings(object):
 
 class MovingThing(object):
   """An icon that moves around."""
-  def __init__(self, image, drawer, x=0, y=0):
+  def __init__(self, image, drawer, x=0):
     """Set up the icon that moves to find things.
 
     Args:
       image: (pygame.Surface) a loaded image
       drawer: (drawer.Drawer) an initialised Drawer to display images
+      x: (int) which column to randomly draw this in
     """
     self.drawer = drawer
     self.image = image
     self.images = { "default" : image}
-    self.x = x
-    self.y = y
+    dark = pygame.Surface(self.image.get_size()).convert_alpha()
+    dark.fill((0, 0, 0, .8 * 255))
+    self.images["frozen"] = dark
+
+    self.frozen = False
     self.score = 0
+    (self.x, self.y) = self.drawer.random_square(column=x)  # randomness only used for y
+    self.draw()  # Initial draw to make the drawer consider these squares
+                   # occupied
 
   def pos(self):
     """Return current location.
@@ -124,32 +132,49 @@ class MovingThing(object):
     except KeyError:
       print("No default image.")
 
+  def freeze(self):
+      self.frozen = True
+      self.image = self.images["frozen"]
+
+  def unfreeze(self):
+      self.frozen = False
+      self.image = self.images["default"]
+
   def draw(self):
     """Instruct the drawer to draw this thing at some location."""
     self.drawer.draw(self.image, self.x, self.y)
 
-  def move_up(self, avoid_obstacles=True):
+  def move_up(self, avoid_obstacles=False):
+    if self.frozen:
+      return
+
     if self.drawer.in_bounds((self.x, self.y - 1), avoid_obstacles):
       self.y -= 1
       return True
     else:
       return False
 
-  def move_down(self, avoid_obstacles=True):
+  def move_down(self, avoid_obstacles=False):
+    if self.frozen:
+      return
     if self.drawer.in_bounds((self.x, self.y + 1), avoid_obstacles):
       self.y += 1
       return True
     else:
       return False
 
-  def move_left(self, avoid_obstacles=True):
+  def move_left(self, avoid_obstacles=False):
+    if self.frozen:
+      return
     if self.drawer.in_bounds((self.x - 1, self.y), avoid_obstacles):
       self.x -= 1
       return True
     else:
       return False
 
-  def move_right(self, avoid_obstacles=True):
+  def move_right(self, avoid_obstacles=False):
+    if self.frozen:
+      return
     if self.drawer.in_bounds((self.x + 1, self.y), avoid_obstacles):
       self.x += 1
       return True
@@ -158,8 +183,8 @@ class MovingThing(object):
 
 class SelfMovingThing(MovingThing):
   """An icon that moves on its own."""
-  
-  def __init__(self, image, drawer, x=0, y=0, move_every=1):
+
+  def __init__(self, image, drawer, x=0, move_every=1):
     """Set up the icon that moves to find things.
 
     Args:
@@ -168,7 +193,7 @@ class SelfMovingThing(MovingThing):
       x, y: (int) starting co=ordinates
       move_every: (int) how often to move in seconds
     """
-    super().__init__(image, drawer, x, y)
+    super().__init__(image, drawer, x)
     self.last_move = time.time()
     self.moving = "down"
     self.move_every = move_every
@@ -176,7 +201,7 @@ class SelfMovingThing(MovingThing):
 
   def stop(self):
     self.stopped = True
-  
+
   def move_up_and_down(self):
     if self.stopped:
       return
