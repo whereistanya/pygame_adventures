@@ -109,6 +109,17 @@ class AmazingMoanaGame(object):
           self.maui.set_default_image()
           self.drawer.update_score_text("You LOST the hook!")
 
+        if self.shells.is_at(self.maui.pos()):
+          self.shells.delete(self.maui.pos())
+          self.maui.carrying += 1
+          if self.maui.carrying >= self.maui.capacity:
+            self.shells.place_randomly(1)
+            self.drawer.update_score_text("OH NO! MAUI DROPPED A SHELL! Put the shells in the shell bin!")
+          else:
+            self.maui.score += 1
+            self.update_score_text()
+
+
       if self.has_boat:
         if self.dad.is_at(self.moana.pos()):
           self.drawer.set_background((255, 64, 0))  # orange
@@ -117,36 +128,24 @@ class AmazingMoanaGame(object):
           self.moana.set_default_image()
           self.drawer.update_score_text("You LOST the boat!")
 
-
-      # Can't get shells if Maui doesn't have the hook or Moana doesn't have the boat.
-      if self.has_hook and self.has_boat:
         if self.shells.is_at(self.moana.pos()):
           self.shells.delete(self.moana.pos())
           self.moana.carrying += 1
           if self.moana.carrying >= self.moana.capacity:
             self.shells.place_randomly(1)
-            self.drawer.update_score_text("OH NO! MOANA DROPPED A SHELL!")
+            self.drawer.update_score_text("OH NO! MOANA DROPPED A SHELL! Put the shells in the shell bin!")
           else:
             self.moana.score += 1
             self.update_score_text()
 
-        if self.shells.is_at(self.maui.pos()):
-          self.shells.delete(self.maui.pos())
-          self.maui.carrying += 1
-          if self.maui.carrying >= self.maui.capacity:
-            self.shells.place_randomly(1)
-            self.drawer.update_score_text("OH NO! MAUI DROPPED A SHELL!")
-          else:
-            self.maui.score += 1
-            self.update_score_text()
 
       if self.shell_bin.is_at(self.maui.pos()):
         self.maui.carrying = 0
-        self.drawer.update_score_text("HURRAY! Now I can't lose shells any more!")
+        self.drawer.update_score_text("HURRAY! Now Maui can't lose shells any more!")
 
       if self.shell_bin.is_at(self.moana.pos()):
         self.moana.carrying = 0
-        self.drawer.update_score_text("HURRAY! Now I can't lose shells any more!")
+        self.drawer.update_score_text("HURRAY! Now Moana can't lose shells any more!")
 
 
       # Only Moana can get the heart.
@@ -175,10 +174,10 @@ class AmazingMoanaGame(object):
           # we're ready to begin!
           self.drawer.set_background((0, 0, 255))  # blue
 
-      # If they walk into mud, they get frozen and lose their things.
+      # If they walk into lava, they get frozen and lose their things.
       if self.mud.is_at(self.moana.pos()):
         self.moana.freeze()
-        self.drawer.update_score_text("Moana is STUCK IN MUD! Get her boat!")
+        self.drawer.update_score_text("Moana is STUCK IN LAVA! Get her boat to save her!")
         self.mud.delete(self.moana.pos())
         if self.has_boat:
           self.boat.place_randomly(1)
@@ -186,7 +185,7 @@ class AmazingMoanaGame(object):
 
       if self.mud.is_at(self.maui.pos()):
         self.maui.freeze()
-        self.drawer.update_score_text("Maui is STUCK IN MUD! Get his hook!")
+        self.drawer.update_score_text("Maui is STUCK IN LAVA! Get his hook to save him!")
         self.mud.delete(self.maui.pos())
         if self.has_hook:
           self.hook.place_randomly(1)
@@ -200,10 +199,13 @@ class AmazingMoanaGame(object):
       # They can unfreeze each other with each other's things.
       if self.hook.is_at(self.moana.pos()):
         self.maui.unfreeze()
-        self.drawer.set_background((255, 64, 0))  # orange
+        self.hook.delete(self.moana.pos())
+        self.has_hook = True
+
       if self.boat.is_at(self.maui.pos()):
         self.moana.unfreeze()
-        self.drawer.set_background((255, 64, 0))  # orange
+        self.boat.delete(self.maui.pos())
+        self.has_boat = True
 
 
       self.drawer.show_messages()
