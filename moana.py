@@ -8,17 +8,13 @@ import drawer
 import things
 
 class AmazingMoanaGame(object):
-  """OMG IT IS SO AMAZING.
+  """OMG IT IS SO AMAZING."""
 
-  Square size is currently 128 but images are 64x64 because they were already
-  that size and I was lazy. I'll fix it some time.
-  """
-
-  def __init__(self, square_size=128, max_x=15, max_y=7,
-               moana_image="images/baby_moana_by_biz.jpg",
+  def __init__(self, square_size=64, max_x=15, max_y=7,
+               moana_image="images/babymoana.jpg",
                moana_boat_image="images/moana_boat.jpg",
                maui_image="images/maui_bird_by_biz.jpg",
-               sharkhead_image="images/maui_by_biz.jpg",
+               sharkhead_image="images/maui.jpg",
                crab_image="images/crab_by_biz.jpg",
                dad_image="images/moana_dad.jpg",
                lava_image="images/lava_monster_by_biz.jpg",
@@ -45,6 +41,7 @@ class AmazingMoanaGame(object):
     pygame.init()
     pygame.mixer.music.load("sounds/shells.wav")
     pygame.mixer.music.play()
+    self.game_over = False
     self.clock = pygame.time.Clock()
     self.image_lib = {}
     self.done = False
@@ -77,7 +74,7 @@ class AmazingMoanaGame(object):
     self.island.add_replacement_image(self.get_image(island_image))
 
     self.drawer.set_background((255, 64, 0))  # orange
-    self.drawer.update_score_text("Get the hook!")
+    self.update_score_text("Get the hook!")
     self.has_hook = False
     self.has_boat = False
 
@@ -107,14 +104,14 @@ class AmazingMoanaGame(object):
           self.has_hook = False
           self.hook.place_randomly(1)
           self.maui.set_default_image()
-          self.drawer.update_score_text("You LOST the hook!")
+          self.update_score_text("You LOST the hook!")
 
         if self.shells.is_at(self.maui.pos()):
           self.shells.delete(self.maui.pos())
           self.maui.carrying += 1
           if self.maui.carrying >= self.maui.capacity:
             self.shells.place_randomly(1)
-            self.drawer.update_score_text("OH NO! MAUI DROPPED A SHELL! Put the shells in the shell bin!")
+            self.update_score_text("OH NO! MAUI DROPPED A SHELL! Put the shells in the shell bin!")
           else:
             self.maui.score += 1
             self.update_score_text()
@@ -126,14 +123,14 @@ class AmazingMoanaGame(object):
           self.has_boat = False
           self.boat.place_randomly(1)
           self.moana.set_default_image()
-          self.drawer.update_score_text("You LOST the boat!")
+          self.update_score_text("You LOST the boat!")
 
         if self.shells.is_at(self.moana.pos()):
           self.shells.delete(self.moana.pos())
           self.moana.carrying += 1
           if self.moana.carrying >= self.moana.capacity:
             self.shells.place_randomly(1)
-            self.drawer.update_score_text("OH NO! MOANA DROPPED A SHELL! Put the shells in the shell bin!")
+            self.update_score_text("OH NO! MOANA DROPPED A SHELL! Put the shells in the shell bin!")
           else:
             self.moana.score += 1
             self.update_score_text()
@@ -141,11 +138,11 @@ class AmazingMoanaGame(object):
 
       if self.shell_bin.is_at(self.maui.pos()):
         self.maui.carrying = 0
-        self.drawer.update_score_text("HURRAY! Now Maui can't lose shells any more!")
+        self.update_score_text("HURRAY! Now Maui can't lose shells any more!")
 
       if self.shell_bin.is_at(self.moana.pos()):
         self.moana.carrying = 0
-        self.drawer.update_score_text("HURRAY! Now Moana can't lose shells any more!")
+        self.update_score_text("HURRAY! Now Moana can't lose shells any more!")
 
 
       # Only Moana can get the heart.
@@ -159,7 +156,7 @@ class AmazingMoanaGame(object):
         self.hook.delete(self.maui.pos())
         self.maui.set_replacement_image()
         self.has_hook = True
-        self.drawer.update_score_text("You got the hook!")
+        self.update_score_text("You got the hook!")
         if self.has_boat:
           # we're ready to begin!
           self.drawer.set_background((0, 0, 255))  # blue
@@ -169,7 +166,7 @@ class AmazingMoanaGame(object):
         self.boat.delete(self.moana.pos())
         self.moana.set_replacement_image()
         self.has_boat = True
-        self.drawer.update_score_text("You got the boat!")
+        self.update_score_text("You got the boat!")
         if self.has_hook:
           # we're ready to begin!
           self.drawer.set_background((0, 0, 255))  # blue
@@ -177,7 +174,7 @@ class AmazingMoanaGame(object):
       # If they walk into lava, they get frozen and lose their things.
       if self.mud.is_at(self.moana.pos()):
         self.moana.freeze()
-        self.drawer.update_score_text("Moana is STUCK IN LAVA! Get her boat to save her!")
+        self.update_score_text("Moana is STUCK IN LAVA! Get her boat to save her!")
         self.mud.delete(self.moana.pos())
         if self.has_boat:
           self.boat.place_randomly(1)
@@ -185,7 +182,7 @@ class AmazingMoanaGame(object):
 
       if self.mud.is_at(self.maui.pos()):
         self.maui.freeze()
-        self.drawer.update_score_text("Maui is STUCK IN LAVA! Get his hook to save him!")
+        self.update_score_text("Maui is STUCK IN LAVA! Get his hook to save him!")
         self.mud.delete(self.maui.pos())
         if self.has_hook:
           self.hook.place_randomly(1)
@@ -214,6 +211,7 @@ class AmazingMoanaGame(object):
 
   def win(self, score_str):
     """Set a winning message for winners."""
+    self.game_over = True
     pygame.mixer.music.load("sounds/we_did_it.wav")
     pygame.mixer.music.play()
     self.drawer.update_score_text(
@@ -225,6 +223,7 @@ class AmazingMoanaGame(object):
 
   def lose(self, score_str):
     """Set a losing message for losers."""
+    self.game_over = True
     self.drawer.update_score_text(
         "AWWW WE LOST. %s Press y to play again, q to quit." % score_str)
     self.drawer.set_background((0, 0, 0))  # black
@@ -232,23 +231,30 @@ class AmazingMoanaGame(object):
     self.dad.stop()
 
 
-  def update_score_text(self):
+  def update_score_text(self, prefix=""):
     count = self.shells.count()
+    if prefix:
+      prefix = "[" + prefix + "] "
     score_str = "Moana: %d (%d), Maui: %d (%d)" % (
       self.moana.carrying, self.moana.score, self.maui.carrying, self.maui.score)
-    if count == 0:
+    # TODO: this is a crappy place to have this game logic.
+    if count == 0 and not self.game_over:
+      print ("placing the heart")
       self.heart.place_randomly(1)
       return
     if count == 1:
-      self.drawer.update_score_text("Only 1 shell left! %s" % score_str)
+      self.drawer.update_score_text("%sOnly 1 shell left! %s" % (prefix, score_str))
       return
-    self.drawer.update_score_text("%d shells left! %s" % (count, score_str))
+    self.drawer.update_score_text("%s%d shells left! %s" % (prefix, count, score_str))
 
   def check_events(self):
     """Check for keypresses and take actions based on them."""
-    for event in pygame.event.get():
+    events = pygame.event.get()
+    for event in events:
       if event.type == pygame.QUIT:
         self.done = True
+      if event.type != pygame.KEYDOWN:
+        continue
       pressed = pygame.key.get_pressed()
       # move maui
       if pressed[pygame.K_UP]:

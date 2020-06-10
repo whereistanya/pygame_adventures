@@ -71,7 +71,8 @@ class Drawer(object):
     # Hack alert! We're doubling the size of all the images here because they're
     # 64px, we moved to 128px squares, and I'm too lazy to resize them. The
     # square size is set in the constructor of moana.AmazingMoanaGame.
-    self.screen.blit(pygame.transform.scale2x(image), (pos_x, pos_y))
+    #self.screen.blit(pygame.transform.scale2x(image), (pos_x, pos_y))
+    self.screen.blit(image, (pos_x, pos_y))
     self.occupied.add((x, y))
     if obstacle:
       self.obstacles.add((x, y))
